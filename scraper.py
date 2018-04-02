@@ -50,7 +50,7 @@ def validateURL(url):
         else:
             ext = os.path.splitext(url)[1]
         validURL = r.getcode() == 200
-        validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx']
+        validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx', '.pdf']
         return validURL, validFiletype
     except:
         print ("Error validating URL.")
@@ -84,8 +84,8 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "NFTRL4_TRWNT_gov"
-url = "https://data.gov.uk/dataset/financial-transactions-data-royal-wolverhampton-hospitals-nhs-trust"
+entity_id = "NFTRLQ_WVNT_gov"
+url = "https://www.wyevalley.nhs.uk/about-us/finance/transparency.aspx"
 errors = 0
 data = []
 
@@ -98,14 +98,19 @@ soup = BeautifulSoup(html, 'lxml')
 
 #### SCRAPE DATA
 
-blocks = soup.find_all('div', 'dataset-resource-text')
+blocks = soup.find('div', id='mainContentArea').find_all('ul')
 for block in blocks:
-    title = block.find('span', 'inner-cell').text.strip().split()
-    url = block.find('div', 'inner-cell').find_all('span')[1].find('a')['href']
-    csvMth = title[2][:3]
-    csvYr = title[1]
-    csvMth = convert_mth_strings(csvMth.upper())
-    data.append([csvYr, csvMth, url])
+    for link in block.find_all('a'):
+        title = link.text.strip()
+        url = 'https://www.wyevalley.nhs.uk'+link['href']
+        csvYr = url.split('.')[-2][-4:]
+        csvMth = title[:3]
+        if '-17' in csvYr:
+            csvYr = '2017'
+        if 'june' in csvYr and 'Jun' in csvMth:
+            csvYr = '2016'
+        csvMth = convert_mth_strings(csvMth.upper())
+        data.append([csvYr, csvMth, url])
 
 
 #### STORE DATA 1.0
